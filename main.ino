@@ -5,7 +5,7 @@
 #include <ModbusIP_ESP8266.h>
 #include <FastLED.h>
 
-//#include <WiFi_login.h>
+#include <WiFi_login.h>
 
 #define LED_PIN  3
 #define COLOR_ORDER GRB
@@ -17,8 +17,8 @@ const int MODE_HREG = 1;
 const int LENGTH_HREG = 2;
 const int PIXEL_HREG = 10;
 // Params for width and height
-const uint8_t kMatrixWidth = 10;
-const uint8_t kMatrixHeight = 10;
+const uint8_t kMatrixWidth = 1;
+const uint8_t kMatrixHeight = 1;
 
 #define NUM_LEDS (kMatrixWidth * kMatrixHeight)
 CRGB leds_plus_safety_pixel[ NUM_LEDS + 1];
@@ -59,6 +59,13 @@ void loop() {
 bool status = mb.Coil(100);
 bool status1 = true;
     digitalWrite(LED_BUILTIN, status);
+
+    for (int i = 0; i < NUM_LEDS*2; i=i+2)
+    {
+        leds[i/2] = ((mb.Hreg(PIXEL_HREG + i)) << 7 | (mb.Hreg(PIXEL_HREG + i + 1)))
+    }
+    FastLED.show();
+
 }
 
 /*uint16_t XY( uint8_t x, uint8_t y)
