@@ -1,10 +1,8 @@
 #include "Arduino.h"
 #include "esp.h"
-
 #include <ESP8266WiFi.h>
 #include <ModbusIP_ESP8266.h>
 #include <FastLED.h>
-
 #include <Ticker.h>
 //#include <WiFi_login.h>
 
@@ -13,22 +11,22 @@
 #define CHIPSET     WS2812
 #define BRIGHTNESS 32
 
-// Modbus Registers Offsets
+// Modbus registers offsets
 const int MODE_HREG = 1;
 const int LENGTH_HREG = 2;
 const int PIXEL_HREG = 10;
 // Params for width and height
-const uint8_t kMatrixWidth = 8;
-const uint8_t kMatrixHeight = 1;
+const uint8_t MatrixWidth = 8;
+const uint8_t MatrixHeight = 1;
 
-#define NUM_LEDS (kMatrixWidth * kMatrixHeight)
+#define NUM_LEDS (MatrixWidth * MatrixHeight)
 CRGB leds[NUM_LEDS];
 //CRGB* const leds( leds_plus_safety_pixel + 1);
 
-//ModbusIP object
+//obiekt Modbusa TCP/IP
 ModbusIP mb;
-
-Ticker LEDdisp;
+//obiekt Tickera -- symulacja przerwań
+Ticker LEDdisp; 
 
 uint32_t test1[8] = {0xfffff0, 0xfffdfd, 0xffa3a3, 
 0xff2929, 0xff2929, 0xff2929, 0x006a00, 0x0000fa};
@@ -39,13 +37,12 @@ void dispLED (){
   for (int i = 0; i < NUM_LEDS; i++)
     {
       tempLED[i] = ((mb.Hreg(PIXEL_HREG + i*2 )) << 16 | (mb.Hreg(PIXEL_HREG + i*2+1)));
-        Serial.println(tempLED[i], HEX);
+        Serial.println(String(LED nr:  ) + String(i) + String(:   ) + String(tempLED[i], HEX));   //Debuging
         leds[i] = tempLED[i];
         //leds[i] = test1[i];
     }
 FastLED.show();
 }
-
 
 
 
@@ -58,7 +55,6 @@ void setup() {
     delay(500);
     Serial.print(".");
   }
- 
   Serial.println("");
   Serial.println("WiFi connected");  
   Serial.println("IP address: ");
@@ -72,21 +68,17 @@ void setup() {
 
   mb.addHreg(MODE_HREG, 0x0001);
   mb.addHreg(LENGTH_HREG, 0x0000);
-  mb.addHreg(PIXEL_HREG, 0x00ff, 16);
-  mb.addCoil(100, true); //test coil
-  pinMode(LED_BUILTIN, OUTPUT); //test led
-  LEDdisp.attach(1, dispLED);
+  mb.addHreg(PIXEL_HREG, 0x00ff, 16); //przesyłanie liczby 32 bit wymaga połączenia 2 rejestrów 16 bit
+  mb.addCoil(100, true); //jedna cewka do testowania polaczenie ze SCADA
+  pinMode(LED_BUILTIN, OUTPUT); //testowa dioda do sprawdzania połączenia ze SCADA
+  LEDdisp.attach(1, dispLED);  //wywoływanie funkcji cyklicznie co 1 sekundę
 }
  
 void loop() {
    mb.task();
    delay(10);
-bool status = mb.Coil(100);
-
-    digitalWrite(LED_BUILTIN, status);
-
-    
-    
+    digitalWrite(LED_BUILTIN, mb.Coil(100));
+  
 
 }
 
