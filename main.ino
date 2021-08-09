@@ -4,11 +4,13 @@
 #include <ModbusIP_ESP8266.h>
 #include <FastLED.h>
 #include <Ticker.h>
+#include "font5x8.h"
+#include "images.h"
 //#include <WiFi_login.h>
 
 #define LED_PIN  15
-#define COLOR_ORDER RGB
-#define CHIPSET     WS2812
+#define COLOR_ORDER GRB
+#define CHIPSET     WS2811
 #define BRIGHTNESS 32
 
 // Modbus registers offsets
@@ -16,8 +18,8 @@ const int MODE_HREG = 1;
 const int LENGTH_HREG = 2;
 const int PIXEL_HREG = 10;
 // Params for width and height
-const uint8_t MatrixWidth = 8;
-const uint8_t MatrixHeight = 1;
+const uint8_t MatrixWidth = 10;
+const uint8_t MatrixHeight = 10;
 
 #define NUM_LEDS (MatrixWidth * MatrixHeight)
 CRGB leds[NUM_LEDS];
@@ -37,14 +39,21 @@ void dispLED (){
   for (int i = 0; i < NUM_LEDS; i++)
     {
       tempLED[i] = ((mb.Hreg(PIXEL_HREG + i*2 )) << 16 | (mb.Hreg(PIXEL_HREG + i*2+1)));
-        Serial.println(String(LED nr:  ) + String(i) + String(:   ) + String(tempLED[i], HEX));   //Debuging
+        Serial.println(String("LED nr:  ") + String(i) + String(":   ") + String(tempLED[i], HEX));   //Debuging
         leds[i] = tempLED[i];
         //leds[i] = test1[i];
     }
 FastLED.show();
 }
 
+void dispTEXT (){
 
+
+
+
+
+
+}
 
 /////////////////////////////////////////////////////////////////////////////////
 void setup() {
@@ -68,7 +77,7 @@ void setup() {
 
   mb.addHreg(MODE_HREG, 0x0001);
   mb.addHreg(LENGTH_HREG, 0x0000);
-  mb.addHreg(PIXEL_HREG, 0x00ff, 16); //przesyłanie liczby 32 bit wymaga połączenia 2 rejestrów 16 bit
+  mb.addHreg(PIXEL_HREG, 0x00ff, NUM_LEDS*2); //przesyłanie liczby 32 bit wymaga połączenia 2 rejestrów 16 bit
   mb.addCoil(100, true); //jedna cewka do testowania polaczenie ze SCADA
   pinMode(LED_BUILTIN, OUTPUT); //testowa dioda do sprawdzania połączenia ze SCADA
   LEDdisp.attach(1, dispLED);  //wywoływanie funkcji cyklicznie co 1 sekundę
@@ -78,8 +87,10 @@ void loop() {
    mb.task();
    delay(10);
     digitalWrite(LED_BUILTIN, mb.Coil(100));
-  
-
+ //     for (int i = 0; i < NUM_LEDS; i++){
+  //        leds[i] = test2[i];
+  //        FastLED.show();
+  //    }
 }
 
 
