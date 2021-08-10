@@ -58,8 +58,8 @@ void dispTEXT (){
 /////////////////////////////////////////////////////////////////////////////////
 void setup() {
   Serial.begin(115200);
-  WiFi.begin("Magnolia-WiFi", "14MaZa14!");
-
+  //WiFi.begin("Magnolia-WiFi", "14MaZa14!");
+  WiFi.begin("inz_MatrixLED", "dyplomowa");
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
