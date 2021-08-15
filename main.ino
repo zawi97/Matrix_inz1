@@ -34,6 +34,7 @@ uint32_t test1[8] = {0xfffff0, 0xfffdfd, 0xffa3a3,
 0xff2929, 0xff2929, 0xff2929, 0x006a00, 0x0000fa};
 uint32_t tempLED[NUM_LEDS];
 bool dispRdy = false;
+uint16_t XY( uint8_t, uint8_t);
 
 void dispLED (){
   for (int i = 0; i < NUM_LEDS; i++)
@@ -46,20 +47,24 @@ void dispLED (){
 FastLED.show();
 }
 
-void dispTEXT (){
 
-
-
-
-
-
+void dispTEXT (uint32_t ascii_char){
+for (uint8_t y = 0; y < 8; y++)
+{
+  for (uint8_t x = 0; x < 5; x++)
+  {
+    if (fontHEX[ascii_char][x] & (1<<y))   leds[XY(x+2, y+1)] = CRGB::Red;
+    else                                   leds[XY(x+2, y+1)] = CRGB::Black;
+  }
+}
+FastLED.show();
 }
 
 /////////////////////////////////////////////////////////////////////////////////
 void setup() {
   Serial.begin(115200);
   //WiFi.begin("Magnolia-WiFi", "14MaZa14!");
-  WiFi.begin("inz_MatrixLED", "dyplomowa");
+  WiFi.begin("Magnolia-WiFi", "14MaZa14!");
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
@@ -80,7 +85,7 @@ void setup() {
   mb.addHreg(PIXEL_HREG, 0x00ff, NUM_LEDS*2); //przesyłanie liczby 32 bit wymaga połączenia 2 rejestrów 16 bit
   mb.addCoil(100, true); //jedna cewka do testowania polaczenie ze SCADA
   pinMode(LED_BUILTIN, OUTPUT); //testowa dioda do sprawdzania połączenia ze SCADA
-  LEDdisp.attach(1, dispLED);  //wywoływanie funkcji cyklicznie co 1 sekundę
+  //LEDdisp.attach(1, dispLED);  //wywoływanie funkcji cyklicznie co 1 sekundę
 }
  
 void loop() {
@@ -91,19 +96,18 @@ void loop() {
   //        leds[i] = test2[i];
   //        FastLED.show();
   //    }
+  dispTEXT(42);
 }
 
 
 
-/*uint16_t XY( uint8_t x, uint8_t y)
+uint16_t XY( uint8_t x, uint8_t y)
 {
   uint16_t i;
-  
-  if( kMatrixSerpentineLayout == false) {
-    i = (y * kMatrixWidth) + x;
-  }
+    i = (y * MatrixWidth) + x;
+  return i;
 
-  if( kMatrixSerpentineLayout == true) {
+  /*if( kMatrixSerpentineLayout == true) {
     if( y & 0x01) {
       // Odd rows run backwards
       uint8_t reverseX = (kMatrixWidth - 1) - x;
@@ -112,5 +116,5 @@ void loop() {
       // Even rows run forwards
       i = (y * kMatrixWidth) + x;
     }
-  }
-}*/
+  }*/
+}
