@@ -1,12 +1,11 @@
-#include "Arduino.h"
 #include "esp.h"
 #include <ESP8266WiFi.h>
-#include <ModbusIP_ESP8266.h>
 #include <FastLED.h>
 #include <Ticker.h>
 #include "font5x8.h"
 #include "images.h"
-//#include <WiFi_login.h>
+#include "MB_TCP\MB_TCP.h"
+//#include "WiFi_login.h"
 
 #define LED_PIN  15
 #define COLOR_ORDER GRB
@@ -32,9 +31,9 @@ void MBtoLED(void);
 void dispTEXT (uint16_t);
 void dispLED (void);
 
-//obiekt Modbusa TCP/IP
-ModbusIP mb;
-//obiekt Tickera -- symulacja przerwań
+//Wywyłanie konstruktora obiektu MB_TCP
+MB_TCP Mb;
+//Wywołanie konstruktora Tickera -- symulacja przerwań
 Ticker LEDdisp; 
 
 uint32_t tempLED[NUM_LEDS];
@@ -43,36 +42,21 @@ uint16_t dispMode = 0;
 
 /////////////////////////////////////////////////////////////////////////////////
 void setup() {
-  Serial.begin(115200);
-  //WiFi.begin("Magnolia-WiFi", "14MaZa14!");
-  WiFi.begin("Magnolia-WiFi", "14MaZa14!");
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println("");
-  Serial.println("WiFi connected");  
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
-
-  mb.server();
+  Serial.begin(115200);  
+  Mb.begin("Magnolia-WiFi", "14MaZa14!");
 
   FastLED.addLeds<CHIPSET, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalSMD5050);
   FastLED.setBrightness( BRIGHTNESS ); 
 
-  mb.addHreg(MODE_HREG, 0x0001);
-  //mb.addHreg(LENGTH_HREG, 0x0000);
-  mb.addHreg(DATA_HREG, 0x00ff, NUM_LEDS*2); //przesyłanie liczby 32 bit wymaga połączenia 2 rejestrów 16 bit
-  mb.addCoil(100, true); //jedna cewka do testowania polaczenie ze SCADA
-  pinMode(LED_BUILTIN, OUTPUT); //testowa dioda do sprawdzania połączenia ze SCADA
   LEDdisp.attach(1, dispLED);  //wywoływanie funkcji cyklicznie co 1 sekundę
 }
  
 void loop() {
-   mb.task();
-   delay(10);
-   digitalWrite(LED_BUILTIN, mb.Coil(100));
-dispMode = mb.Hreg(MODE_HREG);
+  Mb.Run();
+  delay(10);
+
+   digitalWrite(LED_BUILTIN, false);
+dispMode = Mb.MBHoldingRegister[MODE_HREG];
 
 switch (dispMode)
 {
@@ -80,7 +64,7 @@ case 1:
     MBtoLED();
   break;
 case 2:
-    dispTEXT(mb.Hreg(DATA_HREG));
+    dispTEXT(Mb.MBHoldingRegister[10]);
   break;
 case 3:
     //wyświetlanie dwóch znaków naprzemian
@@ -89,13 +73,12 @@ default:
     //jakaś animacja
   break;
 }
-
 }
 
 void MBtoLED(){
     for (int i = 0; i < NUM_LEDS; i++)
     {
-        tempLED[i] = ((mb.Hreg(DATA_HREG + i*2 )) << 16 | (mb.Hreg(DATA_HREG + i*2+1)));
+        tempLED[i] = (Mb.MBHoldingRegister[DATA_HREG + i*2 ] << 16 | Mb.MBHoldingRegister[DATA_HREG + i*2+1]);
         Serial.println(String("LED nr:  ") + String(i) + String(":   ") + String(tempLED[i], HEX));   //Debuging
     }
 }
@@ -120,16 +103,16 @@ void dispLED (){
 FastLED.show();
 }
 
-uint16_t XY( uint8_t x, uint8_t y)
+uint16_t XY(uint8_t x, uint8_t y)
 {
   uint16_t i;
     i = (y * MatrixWidth) + x;
   return i;
 }
 
-uint16_t XY_s( uint8_t x, uint8_t y)
+uint16_t XY_s(uint8_t x, uint8_t y)
 {
-  if( x >= MatrixWidth) return -1;
-  if( y >= MatrixHeight) return -1;
-  return XY(x,y);
+  if(x >= MatrixWidth) return -1;
+  if(y >= MatrixHeight) return -1;
+  return XY(x, y);
 }
