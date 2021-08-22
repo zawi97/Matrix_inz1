@@ -1,8 +1,5 @@
-#ifndef MB_TCP_h
-#define MB_TCP_h
 
 #define MB_PORT 502  
-#define MB_ESP8266
 
 //#define MBDebug     //serial debug enable
 
@@ -51,7 +48,6 @@ public:
   MB_TCP(void);
 
     void begin(const char *ssid, const char *key);
-//    void begin(const char *ssid, const char *key,uint8_t ip[4],uint8_t gateway[4],uint8_t subnet[4]);
 
     void Run();
     unsigned int  MBInputRegister[maxInputRegister];
@@ -62,7 +58,5 @@ private:
     bool ledPinStatus = LOW;
 
     WiFiServer MBServer;
-
 };
 
-#endif
