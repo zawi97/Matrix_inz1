@@ -37,9 +37,10 @@ ModbusIP mb;
 //obiekt Tickera -- symulacja przerwań
 Ticker LEDdisp; 
 
-uint32_t tempLED[NUM_LEDS];
-bool dispRdy = false;
-uint16_t dispMode = 0;
+uint32_t tempLED[NUM_LEDS]; //bufor wyświetlanych pikseli 
+bool dispRdy = false;       //nieużywane
+uint16_t dispMode = 0;      //tryb działania i wyświetlania na matrycy 1 - obraz przesyłany przez MODBUSA
+                            //2 - wyświetlanie znaków
 
 /////////////////////////////////////////////////////////////////////////////////
 void setup() {
@@ -60,12 +61,12 @@ void setup() {
   FastLED.addLeds<CHIPSET, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalSMD5050);
   FastLED.setBrightness( BRIGHTNESS ); 
 
-  mb.addHreg(MODE_HREG, 0x0001);
+  mb.addHreg(MODE_HREG, 0x0001); 
   //mb.addHreg(LENGTH_HREG, 0x0000);
   mb.addHreg(DATA_HREG, 0x00ff, NUM_LEDS*2); //przesyłanie liczby 32 bit wymaga połączenia 2 rejestrów 16 bit
   mb.addCoil(100, true); //jedna cewka do testowania polaczenie ze SCADA
   pinMode(LED_BUILTIN, OUTPUT); //testowa dioda do sprawdzania połączenia ze SCADA
-  LEDdisp.attach(1, dispLED);  //wywoływanie funkcji cyklicznie co 1 sekundę
+  LEDdisp.attach(0.2, dispLED);  //wywoływanie funkcji cyklicznie co 1 sekundę
 }
  
 void loop() {
@@ -80,7 +81,7 @@ case 1:
     MBtoLED();
   break;
 case 2:
-    dispTEXT(mb.Hreg(DATA_HREG));
+    dispTEXT(40);
   break;
 case 3:
     //wyświetlanie dwóch znaków naprzemian
